@@ -1,0 +1,11 @@
+.tokens.txt
+/tokens.json
+/.env
+.env.local
+/tokens
+tokens.json
+tokens.txt
+venv
+/venv
+/token-gen/tokens.txt
+/token-gen/venv
