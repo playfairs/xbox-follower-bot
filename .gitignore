@@ -9,3 +9,5 @@ venv
 /venv
 /token-gen/tokens.txt
 /token-gen/venv
+/config.py
+config.py
