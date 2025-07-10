@@ -78,6 +78,27 @@ class TokenGenerator:
             print("4. Make sure the Chrome/Chromium binary is in your PATH or specify the full path in the script")
             return False
 
+    def wait_and_click(self, by, value, timeout=20):
+        """Wait for element and click it"""
+        element = WebDriverWait(self.driver, timeout).until(
+            EC.element_to_be_clickable((by, value))
+        )
+        time.sleep(random.uniform(0.5, 1.5))
+        element.click()
+        return element
+
+    def wait_and_send_keys(self, by, value, text, timeout=20):
+        """Wait for element and send keys"""
+        element = WebDriverWait(self.driver, timeout).until(
+            EC.presence_of_element_located((by, value))
+        )
+        time.sleep(random.uniform(0.5, 1.5))
+        element.clear()
+        for char in text:
+            element.send_keys(char)
+            time.sleep(random.uniform(0.1, 0.3))
+        return element
+
     def generate_random_password(self, length=12):
         """Generate a random strong password"""
         chars = string.ascii_letters + string.digits + "!@#$%^&*"
@@ -94,44 +115,78 @@ class TokenGenerator:
             
             print(f"Creating new Microsoft account: {email}")
             
-            self.driver.get("https://signup.live.com/")
+            if self.driver:
+                self.driver.quit()
+            self.setup_driver()
             
-            WebDriverWait(self.driver, 20).until(
-                EC.element_to_be_clickable((By.ID, "liveSwitch"))
-            ).click()
+            self.driver.set_page_load_timeout(60)
             
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "MemberName"))
-            ).send_keys(username)
-            self.driver.find_element(By.ID, "iSignupAction").click()
-            
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "Password"))
-            ).send_keys(password)
-            self.driver.find_element(By.ID, "iSignupAction").click()
-            
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "FirstName"))
-            ).send_keys(first_name)
-            self.driver.find_element(By.NAME, "LastName").send_keys(last_name)
-            self.driver.find_element(By.ID, "iSignupAction").click()
-            
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "BirthDay"))
-            ).send_keys("1")
-            self.driver.find_element(By.NAME, "BirthMonth").send_keys("1")
-            self.driver.find_element(By.NAME, "BirthYear").send_keys("2000")
-            self.driver.find_element(By.ID, "iSignupAction").click()
-            
-            print(f"Account created: {email}")
-            return {
-                'email': email,
-                'password': password,
-                'username': username
-            }
-            
+            try:
+                print("Loading signup page...")
+                self.driver.get("https://signup.live.com")
+                
+                WebDriverWait(self.driver, 20).until(
+                    lambda d: d.execute_script('return document.readyState') == 'complete'
+                )
+                
+                if "captcha" in self.driver.page_source.lower():
+                    print("CAPTCHA detected! Please solve it manually...")
+                    input("Press Enter after solving CAPTCHA...")
+                
+                print("Starting signup process...")
+                self.wait_and_click(By.ID, "liveSwitch")
+                
+                print("Entering email...")
+                self.wait_and_send_keys(By.NAME, "MemberName", username)
+                self.wait_and_click(By.ID, "iSignupAction")
+                
+                print("Entering password...")
+                self.wait_and_send_keys(By.NAME, "Password", password)
+                self.wait_and_click(By.ID, "iSignupAction")
+                
+                print("Entering name...")
+                self.wait_and_send_keys(By.NAME, "FirstName", first_name)
+                self.wait_and_send_keys(By.NAME, "LastName", last_name)
+                self.wait_and_click(By.ID, "iSignupAction")
+                
+                print("Entering birthdate...")
+                self.wait_and_send_keys(By.NAME, "BirthDay", str(random.randint(1, 28)))
+                self.wait_and_send_keys(By.NAME, "BirthMonth", str(random.randint(1, 12)))
+                self.wait_and_send_keys(By.NAME, "BirthYear", str(random.randint(1980, 2000)))
+                self.wait_and_click(By.ID, "iSignupAction")
+                
+                print("Waiting for account creation to complete...")
+                WebDriverWait(self.driver, 30).until(
+                    lambda d: "account.microsoft.com" in d.current_url or 
+                            "verification" in d.current_url.lower()
+                )
+                
+                if "verification" in self.driver.current_url.lower():
+                    print("Additional verification required. Please complete it manually.")
+                    input("Press Enter after completing verification...")
+                
+                print(f"Account created: {email}")
+                return {
+                    'email': email,
+                    'password': password,
+                    'username': username
+                }
+                
+            except Exception as e:
+                print(f"Error during account creation: {e}")
+                print("Current URL:", self.driver.current_url)
+                print("Page title:", self.driver.title)
+                
+                with open('page_source.html', 'w', encoding='utf-8') as f:
+                    f.write(self.driver.page_source)
+                self.driver.save_screenshot('error.png')
+                print("Page source saved to 'page_source.html'")
+                print("Screenshot saved to 'error.png'")
+                
+                return None
+                
         except Exception as e:
-            print(f"Error creating account: {e}")
+            print(f"Fatal error in account creation: {e}")
             return None
 
     def generate_token(self) -> bool:
