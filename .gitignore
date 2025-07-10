@@ -11,3 +11,6 @@ venv
 /token-gen/venv
 /config.py
 config.py
+__pycache__
+*.pyc
+*.pycahce
