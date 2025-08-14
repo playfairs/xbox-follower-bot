@@ -1,7 +1,7 @@
 # Xbox Follower Bot
 
-> **Developers Note**  
-> This tool is currently **in active development** and likely will not work yet, if you would like to help me develop this tool, please open an issue or submit a pull request, or DM @playfairs on discord for more information.
+>[!IMPORTANT]
+This tool is abandoned, check https://github.com/playfairs/XBL-Follower-Bot for a working version of this.
 
 A Python-based tool that allows you to follow a user on Xbox Live using multiple accounts. This tool automates the process of following a specific gamertag from multiple Xbox Live accounts.
 
